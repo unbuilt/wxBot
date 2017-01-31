@@ -109,6 +109,7 @@ class WXBot:
         :param encoding: 字符串解码方式
         :return: 转换后的Unicode字符串
         """
+        return string
         if isinstance(string, str):
             return string
         elif isinstance(string, unicode):
@@ -249,6 +250,19 @@ class WXBot:
             return None
         else:
             return name
+
+    def get_contact_city(self, uid):
+        info = self.get_contact_info(uid)
+        if info is None:
+            return None
+        info = info['info']
+        city = None
+        if 'City' in info and info['City']:
+            city = info['City']
+        if 'Province' in info and info['Province'] and (info['Province'] in ['北京', '上海', '天津']):
+            city = info['Province']
+        
+        return city
 
     @staticmethod
     def get_contact_prefer_name(name):
@@ -570,6 +584,7 @@ class WXBot:
             elif self.is_contact(msg['FromUserName']):  # Contact
                 msg_type_id = 4
                 user['name'] = self.get_contact_prefer_name(self.get_contact_name(user['id']))
+                user['city'] = self.get_contact_city(user['id'])
             elif self.is_public(msg['FromUserName']):  # Public
                 msg_type_id = 5
                 user['name'] = self.get_contact_prefer_name(self.get_contact_name(user['id']))
@@ -1134,7 +1149,7 @@ class WXBot:
             'synckey': self.sync_key_str,
             '_': int(time.time()),
         }
-        url = 'https://' + self.sync_host + '.wx2.qq.com/cgi-bin/mmwebwx-bin/synccheck?' + urllib.parse.urlencode(params)
+        url = 'https://' + self.sync_host + '.wx.qq.com/cgi-bin/mmwebwx-bin/synccheck?' + urllib.parse.urlencode(params)
         try:
             r = self.session.get(url, timeout=60)
             r.encoding = 'utf-8'
